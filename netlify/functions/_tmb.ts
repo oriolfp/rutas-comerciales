@@ -280,7 +280,14 @@ interface IBusRow {
 }
 
 interface IBusResponse {
-  features?: { properties: IBusRow }[];
+  status?: string;
+  data?: {
+    ibus?: IBusRow[];
+  };
+}
+
+function rowsFromIBus(resp: IBusResponse): IBusRow[] {
+  return resp.data?.ibus ?? [];
 }
 
 export async function fetchIBus(
@@ -303,13 +310,12 @@ export async function fetchIBus(
     // Line-scoped endpoint may not exist for this combo; fall through to the wide one.
   }
 
-  if (!data.features || data.features.length === 0) {
+  if (rowsFromIBus(data).length === 0) {
     data = await fetchJson<IBusResponse>(stopWideUrl);
   }
 
-  const rows = data.features ?? [];
-  const normalised = rows.map((row) => {
-    const p = row.properties;
+  const rows = rowsFromIBus(data);
+  const normalised = rows.map((p) => {
     const text = s(p['text-ca'] ?? p.text ?? p['text-es'] ?? '');
     const minuts =
       typeof p.t_in_min === 'number'
