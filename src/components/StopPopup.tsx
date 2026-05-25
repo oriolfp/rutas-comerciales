@@ -1,8 +1,6 @@
 import { useTempsReal } from '../hooks/useTempsReal';
 import type { Linia, Parada } from '../types/tmb';
 
-const HAS_REALTIME: Linia['tipus'][] = ['bus', 'metro'];
-
 interface Props {
   linia: Linia;
   parada: Parada;
@@ -10,12 +8,11 @@ interface Props {
 }
 
 export function StopPopup({ linia, parada, enabled }: Props) {
-  const supportsRealTime = HAS_REALTIME.includes(linia.tipus);
   const { data, loading, error } = useTempsReal(
-    supportsRealTime ? linia.tipus : null,
+    linia.tipus,
     linia.codi,
     parada.codi,
-    enabled && supportsRealTime,
+    enabled,
   );
 
   return (
@@ -26,35 +23,14 @@ export function StopPopup({ linia, parada, enabled }: Props) {
           {linia.codi}
         </span>
       </div>
-      {supportsRealTime ? (
-        <TempsRealBlock
-          loading={loading}
-          error={error}
-          data={data}
-          liniaCodi={linia.codi}
-        />
-      ) : (
-        <div className="popup-note">
-          Temps real no disponible per a {labelTipus(linia.tipus)}.
-        </div>
-      )}
+      <TempsRealBlock
+        loading={loading}
+        error={error}
+        data={data}
+        liniaCodi={linia.codi}
+      />
     </div>
   );
-}
-
-function labelTipus(t: Linia['tipus']) {
-  switch (t) {
-    case 'metro':
-      return 'metro';
-    case 'tramvia':
-      return 'tramvia';
-    case 'fgc':
-      return 'FGC';
-    case 'rodalies':
-      return 'Rodalies';
-    default:
-      return 'aquest mode';
-  }
 }
 
 function TempsRealBlock({

@@ -4,9 +4,6 @@ const FILTERS: { value: FilterType; label: string }[] = [
   { value: 'tots', label: 'Tots' },
   { value: 'metro', label: 'Metro' },
   { value: 'bus', label: 'Bus' },
-  { value: 'tramvia', label: 'Tramvia' },
-  { value: 'fgc', label: 'FGC' },
-  { value: 'rodalies', label: 'Rodalies' },
 ];
 
 interface Props {

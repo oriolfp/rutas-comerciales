@@ -118,9 +118,6 @@ function normaliseGeometry(geom: unknown): LineGeometry | null {
 const DEFAULT_COLORS: Record<TransportType, string> = {
   metro: '#666666',
   bus: '#E84E0F',
-  tramvia: '#00AADC',
-  fgc: '#8B4513',
-  rodalies: '#E3000F',
 };
 
 export async function fetchAllLinies(): Promise<Linia[]> {
