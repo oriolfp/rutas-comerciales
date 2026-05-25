@@ -506,6 +506,119 @@ body {
   margin-right: 4px;
 }
 
+/* --- Vehicles en temps real --- */
+.vehicle-icon-wrapper { background: transparent; border: none; }
+.vehicle-icon {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+  transition: transform 0.2s ease;
+}
+.vehicle-icon.flip { transform: scaleX(-1); }
+
+.vehicle-tooltip {
+  background: white !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  padding: 3px 8px 3px 4px !important;
+  font-size: 11px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.vehicle-tooltip-line {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: white;
+  font-weight: 800;
+  font-size: 10px;
+}
+.vehicle-tooltip-dest { color: #222; font-weight: 600; }
+
+.vehicle-popup .leaflet-popup-content {
+  margin: 10px 12px;
+  font-size: 13px;
+}
+.vehicle-popup-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.vehicle-popup-line {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 5px;
+  color: white;
+  font-weight: 800;
+  font-size: 12px;
+}
+.vehicle-popup-dest { font-weight: 700; color: #222; }
+.vehicle-popup-queue {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+  border-top: 1px solid #eee;
+}
+.vehicle-popup-queue li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f4f4f4;
+  font-size: 12px;
+}
+.vehicle-popup-queue li:last-child { border-bottom: none; }
+.vehicle-popup-queue li.next .queue-name { font-weight: 700; color: #222; }
+.vehicle-popup-queue .queue-time {
+  color: #c8001e;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* --- Refresh control --- */
+.refresh-control-wrapper {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 500;
+}
+.refresh-control {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: white;
+  color: #222;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 12px;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.refresh-control:hover:not(:disabled) { transform: scale(1.05); }
+.refresh-control:disabled { cursor: not-allowed; }
+.refresh-control.loading .refresh-icon { animation: refresh-spin 0.8s linear infinite; }
+.refresh-control.cooldown {
+  background: #fff7e0;
+  color: #f4a300;
+}
+.refresh-control.error {
+  background: #fff3f5;
+  color: #c8001e;
+}
+.refresh-countdown {
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: -0.3px;
+}
+@keyframes refresh-spin {
+  to { transform: rotate(360deg); }
+}
+
 @media (max-width: 640px) {
   .app-main { flex-direction: column-reverse; }
   .panel {
@@ -517,4 +630,6 @@ body {
   }
   .map-area { height: 55vh; }
   .app-header h1 { font-size: 16px; }
+  .refresh-control-wrapper { top: 10px; right: 10px; }
+  .refresh-control { width: 40px; height: 40px; }
 }

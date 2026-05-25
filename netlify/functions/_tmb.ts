@@ -287,12 +287,21 @@ function rowsFromIBus(resp: IBusResponse): IBusRow[] {
   return resp.data?.ibus ?? [];
 }
 
+export interface NormalisedArrival {
+  liniaCodi: string;
+  destinacio: string;
+  minutsRestants: number | null;
+  text: string;
+  paradaCodi: string;
+  vehicleId?: string;
+}
+
 export async function fetchIBus(
   liniaCodi: string,
   paradaCodi: string,
   all = false,
 ): Promise<{
-  arribades: { liniaCodi: string; destinacio: string; minutsRestants: number | null; text: string }[];
+  arribades: NormalisedArrival[];
   raw: IBusResponse;
 }> {
   // TMB exposes two iBus endpoints. The line-scoped one is more reliable,
@@ -332,6 +341,8 @@ export async function fetchIBus(
         (minuts !== null && Number.isFinite(minuts)
           ? `${minuts} min`
           : '—'),
+      paradaCodi,
+      vehicleId: s(p.routeId) || undefined,
     };
   });
 
@@ -394,23 +405,19 @@ export async function fetchIMetro(
   paradaCodi: string,
   all = false,
 ): Promise<{
-  arribades: { liniaCodi: string; destinacio: string; minutsRestants: number | null; text: string }[];
+  arribades: NormalisedArrival[];
   raw: IMetroResponse;
 }> {
   const url = `${TMB_BASE}/itransit/metro/estacions?estacions=${encodeURIComponent(paradaCodi)}`;
   const data = await fetchJson<IMetroResponse>(url);
   const now = typeof data.timestamp === 'number' ? data.timestamp : Date.now();
 
-  const arribades: {
-    liniaCodi: string;
-    destinacio: string;
-    minutsRestants: number | null;
-    text: string;
-  }[] = [];
+  const arribades: NormalisedArrival[] = [];
 
   for (const linia of data.linies ?? []) {
     if (!all && liniaCodi && linia.nom_linia && linia.nom_linia !== liniaCodi) continue;
     for (const estacio of linia.estacions ?? []) {
+      const estacioCodi = s(estacio.codi_estacio);
       for (const traj of estacio.linies_trajectes ?? []) {
         if (!all && liniaCodi && traj.nom_linia && traj.nom_linia !== liniaCodi) continue;
         for (const tren of traj.propers_trens ?? []) {
@@ -430,6 +437,8 @@ export async function fetchIMetro(
             destinacio: s(traj.desti_trajecte ?? ''),
             minutsRestants,
             text,
+            paradaCodi: estacioCodi,
+            vehicleId: s(tren.codi_servei) || undefined,
           });
         }
       }
@@ -444,6 +453,46 @@ export async function fetchIMetro(
   });
 
   return { arribades, raw: data };
+}
+
+export async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const out: R[] = [];
+  for (let i = 0; i < items.length; i += limit) {
+    const batch = items.slice(i, i + limit);
+    const res = await Promise.all(batch.map(fn));
+    out.push(...res);
+  }
+  return out;
+}
+
+export async function fetchIBusBatch(
+  liniaCodi: string,
+  paradaCodis: string[],
+): Promise<NormalisedArrival[]> {
+  const results = await mapLimit(paradaCodis, 10, async (codi) => {
+    try {
+      const { arribades } = await fetchIBus(liniaCodi, codi, true);
+      return arribades.filter((a) => !a.liniaCodi || a.liniaCodi === liniaCodi);
+    } catch {
+      return [] as NormalisedArrival[];
+    }
+  });
+  return results.flat();
+}
+
+export async function fetchIMetroBatch(
+  liniaCodi: string,
+  paradaCodis: string[],
+): Promise<NormalisedArrival[]> {
+  // TMB iMetro accepts CSV of station codes in a single call.
+  if (paradaCodis.length === 0) return [];
+  const csv = paradaCodis.join(',');
+  const { arribades } = await fetchIMetro(liniaCodi, csv, false);
+  return arribades.filter((a) => a.liniaCodi === liniaCodi);
 }
 
 export function jsonResponse(status: number, body: unknown): Response {

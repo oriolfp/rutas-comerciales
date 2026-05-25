@@ -32,6 +32,8 @@ export interface TempsRealArribada {
   destinacio: string;
   minutsRestants: number | null;
   text: string;
+  paradaCodi?: string;
+  vehicleId?: string;
 }
 
 export interface TempsRealResposta {
@@ -70,4 +72,31 @@ export interface ParadaAprop extends ParadaAmbLinies {
 
 export interface LiniaAmbComptador extends LiniaResum {
   numParades: number;
+}
+
+export interface CuaParada {
+  codi: string;
+  nom: string;
+  minuts: number;
+}
+
+export interface VehicleRaw {
+  id: string;
+  destinacio: string;
+  minutsFinsProperaParada: number;
+  properaParadaCodi: string;
+  properaParadaNom: string;
+  cuaProperesParades: CuaParada[];
+}
+
+export interface VehiclesResposta {
+  actualitzat: string;
+  vehicles: VehicleRaw[];
+  missatge?: string;
+}
+
+export interface VehiclePos extends VehicleRaw {
+  lat: number;
+  lng: number;
+  direccio: 'left' | 'right';
 }
