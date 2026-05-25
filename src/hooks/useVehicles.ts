@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getVehicles } from '../services/tmb';
-import type { TransportType, VehiclesResposta } from '../types/tmb';
+import type { VehiclesResposta } from '../types/tmb';
 
 interface UseVehiclesArgs {
-  tipus: TransportType | null;
+  liniaId: string | null;
   liniaCodi: string | null;
   enabled: boolean;
 }
@@ -17,7 +17,7 @@ interface UseVehiclesResult {
 }
 
 export function useVehicles({
-  tipus,
+  liniaId,
   liniaCodi,
   enabled,
 }: UseVehiclesArgs): UseVehiclesResult {
@@ -27,10 +27,10 @@ export function useVehicles({
   const [lastFetchedAt, setLastFetchedAt] = useState<number | null>(null);
 
   const fetchNow = useCallback(async () => {
-    if (!enabled || !tipus || !liniaCodi) return;
+    if (!enabled || !liniaId || !liniaCodi) return;
     setLoading(true);
     try {
-      const res = await getVehicles(tipus, liniaCodi);
+      const res = await getVehicles(liniaId, liniaCodi);
       setData(res);
       setError(null);
       setLastFetchedAt(Date.now());
@@ -39,17 +39,17 @@ export function useVehicles({
     } finally {
       setLoading(false);
     }
-  }, [enabled, tipus, liniaCodi]);
+  }, [enabled, liniaId, liniaCodi]);
 
   useEffect(() => {
-    if (!enabled || !tipus || !liniaCodi) {
+    if (!enabled || !liniaId || !liniaCodi) {
       setData(null);
       setError(null);
       setLastFetchedAt(null);
       return;
     }
     fetchNow();
-  }, [enabled, tipus, liniaCodi, fetchNow]);
+  }, [enabled, liniaId, liniaCodi, fetchNow]);
 
   return { data, loading, error, lastFetchedAt, refresh: fetchNow };
 }

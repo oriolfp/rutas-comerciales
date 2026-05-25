@@ -29,7 +29,7 @@ export function LiniesView() {
     data: vehiclesData,
     refresh: refreshVehicles,
   } = useVehicles({
-    tipus: seleccio?.tipus ?? null,
+    liniaId: seleccio?.id ?? null,
     liniaCodi: seleccio?.codi ?? null,
     enabled: !!seleccio,
   });

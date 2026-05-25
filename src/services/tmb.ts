@@ -33,11 +33,11 @@ export function getParadesAll(): Promise<ParadaAmbLinies[]> {
 }
 
 export function getVehicles(
-  tipus: TransportType,
+  liniaId: string,
   liniaCodi: string,
 ): Promise<VehiclesResposta> {
   return jsonFetch<VehiclesResposta>(
-    `${API_BASE}/vehicles/${encodeURIComponent(tipus)}/${encodeURIComponent(liniaCodi)}`,
+    `${API_BASE}/vehicles/${encodeURIComponent(liniaId)}/${encodeURIComponent(liniaCodi)}`,
   );
 }
 

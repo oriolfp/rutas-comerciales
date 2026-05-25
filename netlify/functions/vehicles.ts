@@ -4,6 +4,7 @@ import {
   fetchIMetroBatch,
   fetchParades,
   NormalisedArrival,
+  parseLiniaId,
 } from './_tmb';
 import type {
   CuaParada,
@@ -16,18 +17,26 @@ import type {
 export default async (req: Request): Promise<Response> => {
   try {
     const url = new URL(req.url);
-    // Path: /api/vehicles/{tipus}/{liniaCodi}
+    // Path: /api/vehicles/{liniaId}/{liniaCodi}
+    // liniaId = "bus-1006" (carries CODI_LINIA, needed by fetchParades)
+    // liniaCodi = "H6"     (NOM_LINIA, needed for iBus/iMetro filter)
     const pathParam = url.searchParams.get('path');
     const segments = (pathParam ?? url.pathname.replace(/^.*vehicles\/?/, ''))
       .split('/')
       .map((s) => decodeURIComponent(s))
       .filter(Boolean);
-    const [tipus, liniaCodi] = segments;
-    if (!tipus || !liniaCodi || (tipus !== 'bus' && tipus !== 'metro')) {
-      return errorResponse(400, 'Falten paràmetres tipus/liniaCodi o tipus invàlid');
+    const [liniaId, liniaCodi] = segments;
+    if (!liniaId || !liniaCodi) {
+      return errorResponse(400, 'Falten paràmetres liniaId/liniaCodi');
     }
 
-    const liniaId = `${tipus}-${liniaCodi}`;
+    let tipus: TransportType;
+    try {
+      tipus = parseLiniaId(liniaId).tipus;
+    } catch (err) {
+      return errorResponse(400, err instanceof Error ? err.message : String(err));
+    }
+
     let parades: Parada[];
     try {
       parades = await fetchParades(liniaId);
@@ -55,7 +64,7 @@ export default async (req: Request): Promise<Response> => {
       });
     }
 
-    const vehicles = aggregateVehicles(arribades, parades, tipus as TransportType);
+    const vehicles = aggregateVehicles(arribades, parades, tipus);
     return jsonVehiclesResponse({ actualitzat: new Date().toISOString(), vehicles });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -79,13 +88,9 @@ function aggregateVehicles(
   parades: Parada[],
   tipus: TransportType,
 ): VehicleRaw[] {
-  // Build per-direction stop order maps so we can compute "queue" of upcoming stops.
   const stopByCodi = new Map<string, Parada>();
   for (const p of parades) stopByCodi.set(p.codi, p);
 
-  // Per-sentit ordered list of stops (bus has SENTIT; metro doesn't, so we group by
-  // ORDRE only and treat the entire line as a single direction. Direction filtering
-  // for metro happens at the vehicle's destinacio level later.)
   const stopsBySentit = new Map<string, Parada[]>();
   for (const p of parades) {
     const key = p.sentit ?? 'default';
@@ -97,7 +102,6 @@ function aggregateVehicles(
     list.sort((a, b) => a.ordre - b.ordre);
   }
 
-  // Group arrivals by vehicle id. Fallback id: destinacio + paradaCodi + minuts.
   const grouped = new Map<string, NormalisedArrival[]>();
   for (const a of arribades) {
     if (a.minutsRestants === null) continue;
@@ -111,16 +115,11 @@ function aggregateVehicles(
 
   const vehicles: VehicleRaw[] = [];
   for (const [id, list] of grouped) {
-    // Sort by time ascending; the first arrival is the next stop the vehicle will reach.
     list.sort((a, b) => (a.minutsRestants ?? 0) - (b.minutsRestants ?? 0));
     const next = list[0];
     const nextStop = stopByCodi.get(next.paradaCodi);
     if (!nextStop) continue;
 
-    // Build the queue of upcoming stops for this direction.
-    // Strategy: if we have multiple arrivals from this same vehicleId across stops,
-    // those ARE the queue. Otherwise we synthesise it from the stop order in the
-    // same direction as the nextStop.
     let cua: CuaParada[];
     if (list.length > 1) {
       cua = list.slice(0, 4).map((a) => {
@@ -137,7 +136,6 @@ function aggregateVehicles(
       cua = [
         { codi: nextStop.codi, nom: nextStop.nom, minuts: next.minutsRestants ?? 0 },
       ];
-      // Estimate +2 min per stop for bus, +1.5 for metro as a coarse fallback.
       const stepMin = tipus === 'metro' ? 1.5 : 2;
       for (let k = 1; k < 4 && idx >= 0 && idx + k < list2.length; k += 1) {
         const sp = list2[idx + k];

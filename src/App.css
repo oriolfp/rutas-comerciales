@@ -127,13 +127,13 @@ body {
   cursor: pointer;
   border-bottom: 1px solid #f0f0f0;
   background: white;
-  border-left: 3px solid transparent;
+  border-left: 2px solid transparent;
   width: 100%;
   text-align: left;
   font-family: inherit;
 }
 .line-item:hover { background: #fafafa; }
-.line-item.active { background: #fff3f5; border-left-color: #c8001e; }
+.line-item.active { background: #fafafa; border-left-color: #d8d8d8; }
 
 .line-badge {
   width: 40px;
@@ -583,13 +583,13 @@ body {
   z-index: 500;
 }
 .refresh-control {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  border: none;
-  background: white;
+  border: 2px solid #ffffff;
+  background: #ffffff;
   color: #222;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -597,18 +597,21 @@ body {
   font-family: inherit;
   font-weight: 800;
   font-size: 12px;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 .refresh-control:hover:not(:disabled) { transform: scale(1.05); }
 .refresh-control:disabled { cursor: not-allowed; }
 .refresh-control.loading .refresh-icon { animation: refresh-spin 0.8s linear infinite; }
 .refresh-control.cooldown {
-  background: #fff7e0;
-  color: #f4a300;
+  background: #f4a300;
+  border-color: #ffffff;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(244, 163, 0, 0.25);
 }
 .refresh-control.error {
-  background: #fff3f5;
-  color: #c8001e;
+  background: #c8001e;
+  border-color: #ffffff;
+  color: #ffffff;
 }
 .refresh-countdown {
   font-weight: 800;
