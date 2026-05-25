@@ -1,14 +1,24 @@
 import { useMemo, useState } from 'react';
 import { FilterBar } from './FilterBar';
 import { LineList } from './LineList';
+import { LineListView } from './LineListView';
 import { MapView } from './MapView';
+import { RefreshControl } from './RefreshControl';
 import { SearchInput } from './SearchInput';
+import { ViewToggle, type ViewMode } from './ViewToggle';
 import { useLinies } from '../hooks/useLinies';
 import { useParades } from '../hooks/useParades';
+import { useTotesParades } from '../hooks/useTotesParades';
 import { useVehicles } from '../hooks/useVehicles';
+import { findCorrespondences } from '../utils/correspondences';
 import { extrapolateVehiclePosition } from '../utils/route';
 import { SPEED_M_S } from '../utils/transit';
-import type { Linia, Parada, VehiclePos } from '../types/tmb';
+import type {
+  Linia,
+  LiniaResum,
+  Parada,
+  VehiclePos,
+} from '../types/tmb';
 
 export function LiniesView() {
   const {
@@ -21,6 +31,8 @@ export function LiniesView() {
     setCerca,
   } = useLinies();
   const [seleccio, setSeleccio] = useState<Linia | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('map');
+
   const { parades, loading: paradesLoading, error: paradesError } = useParades(
     seleccio?.id ?? null,
   );
@@ -33,6 +45,27 @@ export function LiniesView() {
     liniaCodi: seleccio?.codi ?? null,
     enabled: !!seleccio,
   });
+
+  // Heavy fetch — only load it when we're actually showing the list view.
+  const { parades: totesParades } = useTotesParades(
+    viewMode === 'list' && !!seleccio,
+  );
+
+  const correspondencesPerParada = useMemo(() => {
+    const map = new Map<string, LiniaResum[]>();
+    if (viewMode !== 'list' || totesParades.length === 0 || !seleccio) return map;
+    for (const p of parades) {
+      map.set(
+        p.codi,
+        findCorrespondences(
+          { lat: p.lat, lng: p.lng },
+          totesParades,
+          seleccio.id,
+        ),
+      );
+    }
+    return map;
+  }, [viewMode, parades, totesParades, seleccio]);
 
   const vehiclesAmbPos = useMemo<VehiclePos[]>(() => {
     if (!seleccio || !vehiclesData) return [];
@@ -72,13 +105,31 @@ export function LiniesView() {
           onSelect={setSeleccio}
         />
       </aside>
-      <section className="map-area" aria-label="Mapa de parades">
-        <MapView
-          linia={liniaAmbParades}
-          parades={parades}
-          vehicles={vehiclesAmbPos}
-          onRefreshVehicles={seleccio ? refreshVehicles : undefined}
-        />
+      <section className="map-area" aria-label="Vista de la línia">
+        {seleccio && (
+          <div className="view-toggle-wrapper">
+            <ViewToggle value={viewMode} onChange={setViewMode} />
+          </div>
+        )}
+        {viewMode === 'map' || !seleccio ? (
+          <MapView
+            linia={liniaAmbParades}
+            parades={parades}
+            vehicles={vehiclesAmbPos}
+          />
+        ) : (
+          <LineListView
+            linia={seleccio}
+            parades={parades}
+            vehicles={vehiclesAmbPos}
+            correspondencesPerParada={correspondencesPerParada}
+          />
+        )}
+        {seleccio && (
+          <div className="refresh-control-wrapper">
+            <RefreshControl onRefresh={refreshVehicles} />
+          </div>
+        )}
         {seleccio && paradesLoading && (
           <div className="map-overlay">Carregant parades…</div>
         )}

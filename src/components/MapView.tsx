@@ -6,7 +6,6 @@ import {
   TileLayer,
   useMap,
 } from 'react-leaflet';
-import { RefreshControl } from './RefreshControl';
 import { StopMarker } from './StopMarker';
 import { VehicleMarker } from './VehicleMarker';
 import type { Linia, Parada, VehiclePos } from '../types/tmb';
@@ -18,10 +17,9 @@ interface Props {
   linia: Linia | null;
   parades: Parada[];
   vehicles?: VehiclePos[];
-  onRefreshVehicles?: () => Promise<void>;
 }
 
-export function MapView({ linia, parades, vehicles, onRefreshVehicles }: Props) {
+export function MapView({ linia, parades, vehicles }: Props) {
   const polylinePoints = useMemo<[number, number][][]>(() => {
     if (linia?.geometry) {
       if (linia.geometry.type === 'LineString') {
@@ -38,54 +36,47 @@ export function MapView({ linia, parades, vehicles, onRefreshVehicles }: Props) 
   }, [linia, parades]);
 
   return (
-    <>
-      <MapContainer
-        center={BARCELONA_CENTER}
-        zoom={DEFAULT_ZOOM}
-        className="map-container"
-        scrollWheelZoom
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          subdomains={['a', 'b', 'c', 'd']}
-          maxZoom={20}
+    <MapContainer
+      center={BARCELONA_CENTER}
+      zoom={DEFAULT_ZOOM}
+      className="map-container"
+      scrollWheelZoom
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        subdomains={['a', 'b', 'c', 'd']}
+        maxZoom={20}
+      />
+      {linia && polylinePoints.map((segment, idx) => (
+        <Polyline
+          key={`${linia.id}-${idx}`}
+          positions={segment}
+          pathOptions={{ color: linia.color, weight: 5, opacity: 0.9 }}
         />
-        {linia && polylinePoints.map((segment, idx) => (
-          <Polyline
-            key={`${linia.id}-${idx}`}
-            positions={segment}
-            pathOptions={{ color: linia.color, weight: 5, opacity: 0.9 }}
+      ))}
+      {linia &&
+        parades.map((p, idx) => (
+          <StopMarker
+            key={p.id}
+            linia={linia}
+            parada={p}
+            terminal={idx === 0 || idx === parades.length - 1}
           />
         ))}
-        {linia &&
-          parades.map((p, idx) => (
-            <StopMarker
-              key={p.id}
-              linia={linia}
-              parada={p}
-              terminal={idx === 0 || idx === parades.length - 1}
-            />
-          ))}
-        {linia && vehicles &&
-          vehicles.map((v) => (
-            <VehicleMarker
-              key={v.id}
-              vehicle={v}
-              liniaCodi={linia.codi}
-              color={linia.color}
-              tipus={linia.tipus}
-            />
-          ))}
-        <AutoFit linia={linia} parades={parades} />
-        <InvalidateOnResize />
-      </MapContainer>
-      {linia && onRefreshVehicles && (
-        <div className="refresh-control-wrapper">
-          <RefreshControl onRefresh={onRefreshVehicles} />
-        </div>
-      )}
-    </>
+      {linia && vehicles &&
+        vehicles.map((v) => (
+          <VehicleMarker
+            key={v.id}
+            vehicle={v}
+            liniaCodi={linia.codi}
+            color={linia.color}
+            tipus={linia.tipus}
+          />
+        ))}
+      <AutoFit linia={linia} parades={parades} />
+      <InvalidateOnResize />
+    </MapContainer>
   );
 }
 
