@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { FilterBar } from './FilterBar';
+import { LineHeaderBanner } from './LineHeaderBanner';
 import { LineList } from './LineList';
 import { LineListView } from './LineListView';
 import { MapView } from './MapView';
 import { RefreshControl } from './RefreshControl';
 import { SearchInput } from './SearchInput';
+import { VehicleVisibilityToggle } from './VehicleVisibilityToggle';
 import { ViewToggle, type ViewMode } from './ViewToggle';
 import { useLinies } from '../hooks/useLinies';
 import { useParades } from '../hooks/useParades';
@@ -32,6 +34,7 @@ export function LiniesView() {
   } = useLinies();
   const [seleccio, setSeleccio] = useState<Linia | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('map');
+  const [showVehicles, setShowVehicles] = useState(true);
 
   const { parades, loading: paradesLoading, error: paradesError } = useParades(
     seleccio?.id ?? null,
@@ -83,7 +86,16 @@ export function LiniesView() {
         speedMS: speed,
       });
       if (!pos) continue;
-      out.push({ ...v, ...pos });
+      // Override direccio from the destination's position: a much more robust
+      // signal than the local polyline segment direction (which oscillates on
+      // vertical sections of the route).
+      const destStop = findDestinationStop(parades, v.destinacio);
+      const direccio = destStop
+        ? destStop.lng >= pos.lng
+          ? 'right'
+          : 'left'
+        : pos.direccio;
+      out.push({ ...v, ...pos, direccio });
     }
     return out;
   }, [seleccio, vehiclesData, parades]);
@@ -107,6 +119,11 @@ export function LiniesView() {
       </aside>
       <section className="map-area" aria-label="Vista de la línia">
         {seleccio && (
+          <div className="line-header-wrapper">
+            <LineHeaderBanner linia={seleccio} />
+          </div>
+        )}
+        {seleccio && (
           <div className="view-toggle-wrapper">
             <ViewToggle value={viewMode} onChange={setViewMode} />
           </div>
@@ -115,19 +132,24 @@ export function LiniesView() {
           <MapView
             linia={liniaAmbParades}
             parades={parades}
-            vehicles={vehiclesAmbPos}
+            vehicles={showVehicles ? vehiclesAmbPos : []}
           />
         ) : (
           <LineListView
             linia={seleccio}
             parades={parades}
-            vehicles={vehiclesAmbPos}
+            vehicles={showVehicles ? vehiclesAmbPos : []}
             correspondencesPerParada={correspondencesPerParada}
           />
         )}
         {seleccio && (
-          <div className="refresh-control-wrapper">
+          <div className="map-controls-stack">
             <RefreshControl onRefresh={refreshVehicles} />
+            <VehicleVisibilityToggle
+              value={showVehicles}
+              onChange={setShowVehicles}
+              tipus={seleccio.tipus}
+            />
           </div>
         )}
         {seleccio && paradesLoading && (
@@ -144,6 +166,19 @@ export function LiniesView() {
       </section>
     </main>
   );
+}
+
+function findDestinationStop(parades: Parada[], destinacio: string): Parada | null {
+  if (!destinacio) return null;
+  const target = destinacio.toLowerCase().trim();
+  let m = parades.find((p) => p.nom.toLowerCase() === target);
+  if (m) return m;
+  m = parades.find((p) => p.nom.toLowerCase().includes(target));
+  if (m) return m;
+  // Try the reverse: the destinacio contains a parada name (e.g. "Onze de
+  // Setembre" matches a parada literally named "Onze de Setembre").
+  m = parades.find((p) => target.includes(p.nom.toLowerCase()));
+  return m ?? null;
 }
 
 function polylineFromLinia(linia: Linia, parades: Parada[]) {

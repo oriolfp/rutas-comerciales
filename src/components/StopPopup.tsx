@@ -1,4 +1,5 @@
 import { useTempsReal } from '../hooks/useTempsReal';
+import { groupArrivalsByDestination } from '../utils/groupArrivals';
 import type { Linia, Parada } from '../types/tmb';
 
 interface Props {
@@ -50,22 +51,30 @@ function TempsRealBlock({
   if (!data.disponible || data.arribades.length === 0) {
     return <div className="popup-note">Sense vehicles propers ara mateix.</div>;
   }
+  const groups = groupArrivalsByDestination(data.arribades.slice(0, 8));
   return (
-    <ul className="popup-arrivals">
-      {data.arribades.slice(0, 5).map((a, idx) => {
-        const isOtherLine = a.liniaCodi && a.liniaCodi !== liniaCodi;
-        return (
-          <li key={idx}>
-            <span className="popup-dest">
-              {isOtherLine && (
-                <span className="popup-otherline">{a.liniaCodi}</span>
-              )}
-              {a.destinacio || '—'}
-            </span>
-            <span className="popup-time">{a.text}</span>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="popup-arrivals">
+      {groups.map((g, gi) => (
+        <div key={g.destinacio} className="popup-group">
+          {gi > 0 && <div className="popup-group-divider" />}
+          <div className="popup-group-head">→ {g.destinacio || '—'}</div>
+          <ul>
+            {g.arribades.map((a, idx) => {
+              const isOtherLine = a.liniaCodi && a.liniaCodi !== liniaCodi;
+              return (
+                <li key={idx}>
+                  <span className="popup-dest">
+                    {isOtherLine && (
+                      <span className="popup-otherline">{a.liniaCodi}</span>
+                    )}
+                  </span>
+                  <span className="popup-time">{a.text}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }

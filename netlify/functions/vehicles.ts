@@ -17,9 +17,6 @@ import type {
 export default async (req: Request): Promise<Response> => {
   try {
     const url = new URL(req.url);
-    // Path: /api/vehicles/{liniaId}/{liniaCodi}
-    // liniaId = "bus-1006" (carries CODI_LINIA, needed by fetchParades)
-    // liniaCodi = "H6"     (NOM_LINIA, needed for iBus/iMetro filter)
     const pathParam = url.searchParams.get('path');
     const segments = (pathParam ?? url.pathname.replace(/^.*vehicles\/?/, ''))
       .split('/')
@@ -83,6 +80,13 @@ function jsonVehiclesResponse(body: VehiclesResposta): Response {
   });
 }
 
+// Aggregates raw arrivals into unique vehicles.
+// - Metro provides `codi_servei` which is a real train id → group by it.
+// - Bus returns `routeId` but it's the trip/direction id (shared by every bus
+//   in that direction) — not unique per vehicle. So for bus we walk
+//   "trajectories": starting from the closest arrival in each direction we
+//   absorb later-stop arrivals whose minuts grow consistently with travel
+//   time, then move on to the next closest unabsorbed arrival.
 function aggregateVehicles(
   arribades: NormalisedArrival[],
   parades: Parada[],
@@ -102,65 +106,122 @@ function aggregateVehicles(
     list.sort((a, b) => a.ordre - b.ordre);
   }
 
-  const grouped = new Map<string, NormalisedArrival[]>();
+  const withId: NormalisedArrival[] = [];
+  const withoutId: NormalisedArrival[] = [];
   for (const a of arribades) {
     if (a.minutsRestants === null) continue;
-    const id =
-      a.vehicleId ||
-      `${a.destinacio}|fallback|${a.paradaCodi}|${a.minutsRestants}`;
-    const list = grouped.get(id) ?? [];
-    list.push(a);
-    grouped.set(id, list);
+    if (!stopByCodi.has(a.paradaCodi)) continue;
+    if (a.vehicleId && tipus === 'metro') withId.push(a);
+    else withoutId.push(a);
   }
 
   const vehicles: VehicleRaw[] = [];
-  for (const [id, list] of grouped) {
+
+  // Path 1: metro — group by codi_servei (real train id).
+  const byVehicleId = new Map<string, NormalisedArrival[]>();
+  for (const a of withId) {
+    const list = byVehicleId.get(a.vehicleId!) ?? [];
+    list.push(a);
+    byVehicleId.set(a.vehicleId!, list);
+  }
+  for (const [id, list] of byVehicleId) {
     list.sort((a, b) => (a.minutsRestants ?? 0) - (b.minutsRestants ?? 0));
-    const next = list[0];
-    const nextStop = stopByCodi.get(next.paradaCodi);
-    if (!nextStop) continue;
-
-    let cua: CuaParada[];
-    if (list.length > 1) {
-      cua = list.slice(0, 4).map((a) => {
-        const sp = stopByCodi.get(a.paradaCodi);
-        return {
-          codi: a.paradaCodi,
-          nom: sp?.nom ?? '',
-          minuts: a.minutsRestants ?? 0,
-        };
-      });
-    } else {
-      const list2 = stopsBySentit.get(nextStop.sentit ?? 'default') ?? [];
-      const idx = list2.findIndex((p) => p.codi === nextStop.codi);
-      cua = [
-        { codi: nextStop.codi, nom: nextStop.nom, minuts: next.minutsRestants ?? 0 },
-      ];
-      const stepMin = tipus === 'metro' ? 1.5 : 2;
-      for (let k = 1; k < 4 && idx >= 0 && idx + k < list2.length; k += 1) {
-        const sp = list2[idx + k];
-        cua.push({
-          codi: sp.codi,
-          nom: sp.nom,
-          minuts: Math.round((next.minutsRestants ?? 0) + stepMin * k),
-        });
-      }
-    }
-
+    const head = list[0];
+    const headStop = stopByCodi.get(head.paradaCodi)!;
     vehicles.push({
       id,
-      destinacio: next.destinacio,
-      minutsFinsProperaParada: next.minutsRestants ?? 0,
-      properaParadaCodi: next.paradaCodi,
-      properaParadaNom: nextStop.nom,
-      cuaProperesParades: cua,
+      destinacio: head.destinacio,
+      minutsFinsProperaParada: head.minutsRestants ?? 0,
+      properaParadaCodi: head.paradaCodi,
+      properaParadaNom: headStop.nom,
+      cuaProperesParades: buildQueueFromList(list, stopByCodi),
     });
+  }
+
+  // Path 2: bus (or metro without ids) — trajectory walk per direction.
+  const stepMin = tipus === 'metro' ? 1.2 : 1.5;
+  const byDest = new Map<string, NormalisedArrival[]>();
+  for (const a of withoutId) {
+    const list = byDest.get(a.destinacio) ?? [];
+    list.push(a);
+    byDest.set(a.destinacio, list);
+  }
+
+  let seq = 0;
+  for (const [destinacio, arrivals] of byDest) {
+    const remaining = [...arrivals];
+    while (remaining.length > 0) {
+      remaining.sort((a, b) => (a.minutsRestants ?? 0) - (b.minutsRestants ?? 0));
+      const head = remaining.shift()!;
+      const headStop = stopByCodi.get(head.paradaCodi)!;
+      const headMin = head.minutsRestants ?? 0;
+      const trajectory: NormalisedArrival[] = [head];
+
+      for (let i = remaining.length - 1; i >= 0; i--) {
+        const a = remaining[i];
+        const aStop = stopByCodi.get(a.paradaCodi);
+        if (!aStop) continue;
+        const ordreDiff = aStop.ordre - headStop.ordre;
+        if (ordreDiff <= 0) continue;
+        const aMin = a.minutsRestants ?? 0;
+        const expected = headMin + ordreDiff * stepMin;
+        const tolerance = Math.max(1.5, stepMin * ordreDiff * 0.5);
+        if (Math.abs(aMin - expected) <= tolerance) {
+          trajectory.push(a);
+          remaining.splice(i, 1);
+        }
+      }
+
+      trajectory.sort((a, b) => (a.minutsRestants ?? 0) - (b.minutsRestants ?? 0));
+
+      let cua: CuaParada[];
+      if (trajectory.length > 1) {
+        cua = buildQueueFromList(trajectory, stopByCodi);
+      } else {
+        // Synthesise queue from line order in the head's sentit.
+        const list2 = stopsBySentit.get(headStop.sentit ?? 'default') ?? [];
+        const idx = list2.findIndex((p) => p.codi === headStop.codi);
+        cua = [{ codi: headStop.codi, nom: headStop.nom, minuts: headMin }];
+        for (let k = 1; k < 4 && idx >= 0 && idx + k < list2.length; k += 1) {
+          const sp = list2[idx + k];
+          cua.push({
+            codi: sp.codi,
+            nom: sp.nom,
+            minuts: Math.round(headMin + stepMin * k),
+          });
+        }
+      }
+
+      seq += 1;
+      vehicles.push({
+        id: `${destinacio}|t${seq}|${head.paradaCodi}|${headMin}`,
+        destinacio,
+        minutsFinsProperaParada: headMin,
+        properaParadaCodi: head.paradaCodi,
+        properaParadaNom: headStop.nom,
+        cuaProperesParades: cua,
+      });
+    }
   }
 
   vehicles.sort(
     (a, b) => a.minutsFinsProperaParada - b.minutsFinsProperaParada,
   );
   return vehicles;
+}
+
+function buildQueueFromList(
+  list: NormalisedArrival[],
+  stopByCodi: Map<string, Parada>,
+): CuaParada[] {
+  return list.slice(0, 4).map((a) => {
+    const sp = stopByCodi.get(a.paradaCodi);
+    return {
+      codi: a.paradaCodi,
+      nom: sp?.nom ?? '',
+      minuts: a.minutsRestants ?? 0,
+    };
+  });
 }
 
 export const config = { path: '/api/vehicles/*' };

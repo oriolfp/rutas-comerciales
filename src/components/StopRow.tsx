@@ -1,4 +1,5 @@
 import { useTempsReal } from '../hooks/useTempsReal';
+import { groupArrivalsByDestination } from '../utils/groupArrivals';
 import type {
   Linia,
   LiniaResum,
@@ -95,21 +96,29 @@ function StopRowAccordion({ parada, linia }: { parada: Parada; linia: Linia }) {
   if (!data.disponible || data.arribades.length === 0) {
     return <div className="acc-empty">Sense vehicles propers ara mateix.</div>;
   }
+  const groups = groupArrivalsByDestination(data.arribades.slice(0, 12));
   return (
-    <ul className="acc-arrivals">
-      {data.arribades.slice(0, 8).map((a, idx) => (
-        <li key={`${a.liniaCodi}-${idx}`}>
-          <span
-            className="acc-line"
-            style={{ background: colorForLine(a.liniaCodi, linia) }}
-          >
-            {a.liniaCodi}
-          </span>
-          <span className="acc-dest">{a.destinacio || '—'}</span>
-          <span className="acc-time">{a.text}</span>
-        </li>
+    <div className="acc-groups">
+      {groups.map((g, gi) => (
+        <div key={g.destinacio} className="acc-group">
+          {gi > 0 && <div className="acc-group-divider" />}
+          <div className="acc-group-head">→ {g.destinacio || '—'}</div>
+          <ul className="acc-arrivals">
+            {g.arribades.map((a, idx) => (
+              <li key={`${a.liniaCodi}-${idx}`}>
+                <span
+                  className="acc-line"
+                  style={{ background: colorForLine(a.liniaCodi, linia) }}
+                >
+                  {a.liniaCodi}
+                </span>
+                <span className="acc-time">{a.text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       ))}
-    </ul>
+    </div>
   );
 }
 
@@ -127,12 +136,14 @@ function VehicleIndicator({
   color: string;
   tipus: TransportType;
 }) {
+  const minuts = vehicle.minutsFinsProperaParada;
+  const showTime = minuts > 0;
   return (
     <div className="list-vehicle-indicator" title={vehicle.destinacio}>
       <span className="lvi-icon">
         {tipus === 'bus' ? <BusSilhouette color={color} /> : <MetroSilhouette color={color} />}
       </span>
-      <span className="lvi-time">↓ {Math.max(0, vehicle.minutsFinsProperaParada)} min</span>
+      {showTime && <span className="lvi-time">↓ {minuts} min</span>}
     </div>
   );
 }
