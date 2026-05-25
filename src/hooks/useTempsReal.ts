@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getTempsReal } from '../services/tmb';
-import type { TempsRealResposta } from '../types/tmb';
+import type { TempsRealResposta, TransportType } from '../types/tmb';
 
 interface UseTempsRealResult {
   data: TempsRealResposta | null;
@@ -11,6 +11,7 @@ interface UseTempsRealResult {
 const REFRESH_MS = 30_000;
 
 export function useTempsReal(
+  tipus: TransportType | null,
   liniaCodi: string | null,
   paradaCodi: string | null,
   enabled: boolean,
@@ -20,7 +21,7 @@ export function useTempsReal(
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!enabled || !liniaCodi || !paradaCodi) {
+    if (!enabled || !tipus || !liniaCodi || !paradaCodi) {
       setData(null);
       setLoading(false);
       setError(null);
@@ -29,7 +30,7 @@ export function useTempsReal(
     let cancel = false;
     const fetchOnce = () => {
       setLoading(true);
-      getTempsReal(liniaCodi, paradaCodi)
+      getTempsReal(tipus, liniaCodi, paradaCodi)
         .then((res) => {
           if (cancel) return;
           setData(res);
@@ -49,7 +50,7 @@ export function useTempsReal(
       cancel = true;
       window.clearInterval(id);
     };
-  }, [liniaCodi, paradaCodi, enabled]);
+  }, [tipus, liniaCodi, paradaCodi, enabled]);
 
   return { data, loading, error };
 }

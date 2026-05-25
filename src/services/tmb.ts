@@ -1,4 +1,4 @@
-import type { Linia, Parada, TempsRealResposta } from '../types/tmb';
+import type { Linia, Parada, TempsRealResposta, TransportType } from '../types/tmb';
 
 const API_BASE = '/api';
 
@@ -22,10 +22,11 @@ export function getParades(liniaId: string): Promise<Parada[]> {
 }
 
 export function getTempsReal(
+  tipus: TransportType,
   liniaCodi: string,
   paradaCodi: string,
 ): Promise<TempsRealResposta> {
   return jsonFetch<TempsRealResposta>(
-    `${API_BASE}/temps-real/${encodeURIComponent(liniaCodi)}/${encodeURIComponent(paradaCodi)}`,
+    `${API_BASE}/temps-real/${encodeURIComponent(tipus)}/${encodeURIComponent(liniaCodi)}/${encodeURIComponent(paradaCodi)}`,
   );
 }

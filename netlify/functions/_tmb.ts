@@ -350,6 +350,97 @@ export async function fetchIBus(
   return { arribades, raw: data };
 }
 
+// --- TEMPS REAL (iMetro / itransit) -----------------------------------
+
+interface IMetroTren {
+  temps_arribada?: number;
+  codi_servei?: string;
+}
+
+interface IMetroTrajecte {
+  codi_linia?: number;
+  nom_linia?: string;
+  color_linia?: string;
+  codi_trajecte?: string;
+  desti_trajecte?: string;
+  propers_trens?: IMetroTren[];
+}
+
+interface IMetroEstacio {
+  codi_estacio?: number;
+  codi_via?: number;
+  id_sentit?: number;
+  linies_trajectes?: IMetroTrajecte[];
+}
+
+interface IMetroLinia {
+  codi_linia?: number;
+  nom_linia?: string;
+  color_linia?: string;
+  estacions?: IMetroEstacio[];
+}
+
+interface IMetroResponse {
+  timestamp?: number;
+  linies?: IMetroLinia[];
+}
+
+export async function fetchIMetro(
+  liniaCodi: string,
+  paradaCodi: string,
+): Promise<{
+  arribades: { liniaCodi: string; destinacio: string; minutsRestants: number | null; text: string }[];
+  raw: IMetroResponse;
+}> {
+  const url = `${TMB_BASE}/itransit/metro/estacions?estacions=${encodeURIComponent(paradaCodi)}`;
+  const data = await fetchJson<IMetroResponse>(url);
+  const now = typeof data.timestamp === 'number' ? data.timestamp : Date.now();
+
+  const arribades: {
+    liniaCodi: string;
+    destinacio: string;
+    minutsRestants: number | null;
+    text: string;
+  }[] = [];
+
+  for (const linia of data.linies ?? []) {
+    if (liniaCodi && linia.nom_linia && linia.nom_linia !== liniaCodi) continue;
+    for (const estacio of linia.estacions ?? []) {
+      for (const traj of estacio.linies_trajectes ?? []) {
+        if (liniaCodi && traj.nom_linia && traj.nom_linia !== liniaCodi) continue;
+        for (const tren of traj.propers_trens ?? []) {
+          const arrival =
+            typeof tren.temps_arribada === 'number' ? tren.temps_arribada : null;
+          if (arrival === null) continue;
+          const secondsRemaining = Math.max(0, Math.round((arrival - now) / 1000));
+          const minutsRestants = Math.floor(secondsRemaining / 60);
+          const text =
+            secondsRemaining < 30
+              ? 'Arribant'
+              : minutsRestants > 0
+                ? `${minutsRestants} min`
+                : `${secondsRemaining} s`;
+          arribades.push({
+            liniaCodi: s(traj.nom_linia ?? linia.nom_linia),
+            destinacio: s(traj.desti_trajecte ?? ''),
+            minutsRestants,
+            text,
+          });
+        }
+      }
+    }
+  }
+
+  // Show all upcoming trains sorted by arrival time.
+  arribades.sort((a, b) => {
+    const am = a.minutsRestants ?? Number.POSITIVE_INFINITY;
+    const bm = b.minutsRestants ?? Number.POSITIVE_INFINITY;
+    return am - bm;
+  });
+
+  return { arribades, raw: data };
+}
+
 export function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status,
