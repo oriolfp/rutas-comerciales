@@ -30,6 +30,37 @@ async function fetchJson<T>(url: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+export interface RawProbe {
+  url: string;
+  status: number;
+  ok: boolean;
+  body: unknown;
+}
+
+// Performs a raw fetch and returns the parsed body (or text) without throwing,
+// so the debug endpoint can show what TMB returned even on errors.
+export async function rawFetch(url: string): Promise<RawProbe> {
+  const fullUrl = withCreds(url);
+  // Strip credentials from the URL we expose back to the client.
+  const safeUrl = fullUrl
+    .replace(/([?&])app_id=[^&]*/i, '$1app_id=***')
+    .replace(/([?&])app_key=[^&]*/i, '$1app_key=***');
+  try {
+    const res = await fetch(fullUrl, { headers: { Accept: 'application/json' } });
+    const text = await res.text();
+    let body: unknown = text;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      // keep as text
+    }
+    return { url: safeUrl, status: res.status, ok: res.ok, body };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { url: safeUrl, status: 0, ok: false, body: { error: message } };
+  }
+}
+
 interface GeoJsonFeature<G, P> {
   type: 'Feature';
   geometry: G | null;
