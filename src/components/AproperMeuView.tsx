@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { AproperMeuMap } from './AproperMeuMap';
-import { LiniesEnZona } from './LiniesEnZona';
 import { LocationBlock } from './LocationBlock';
 import { ParadesAprop } from './ParadesAprop';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -13,7 +12,7 @@ export function AproperMeuView() {
   const [radius, setRadius] = useState(500);
   const { position, accuracy, status, error, refresh } = useGeolocation(true);
   const { parades, loading: loadingParades, error: paradesError } = useTotesParades(true);
-  const { paradesDins, linies } = useParadesAprop(position, radius, parades);
+  const { paradesDins } = useParadesAprop(position, radius, parades);
 
   return (
     <main className="app-main">
@@ -36,10 +35,7 @@ export function AproperMeuView() {
           </div>
         )}
         {!loadingParades && !paradesError && (
-          <>
-            <LiniesEnZona linies={linies} />
-            <ParadesAprop parades={paradesDins} topN={TOP_N} />
-          </>
+          <ParadesAprop parades={paradesDins} topN={TOP_N} />
         )}
       </aside>
       <section className="map-area" aria-label="Mapa amb radi de cerca">

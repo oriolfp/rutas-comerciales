@@ -35,8 +35,10 @@ export function getTempsReal(
   tipus: TransportType,
   liniaCodi: string,
   paradaCodi: string,
+  all = false,
 ): Promise<TempsRealResposta> {
+  const qs = all ? '?all=1' : '';
   return jsonFetch<TempsRealResposta>(
-    `${API_BASE}/temps-real/${encodeURIComponent(tipus)}/${encodeURIComponent(liniaCodi)}/${encodeURIComponent(paradaCodi)}`,
+    `${API_BASE}/temps-real/${encodeURIComponent(tipus)}/${encodeURIComponent(liniaCodi)}/${encodeURIComponent(paradaCodi)}${qs}`,
   );
 }

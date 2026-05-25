@@ -290,6 +290,7 @@ function rowsFromIBus(resp: IBusResponse): IBusRow[] {
 export async function fetchIBus(
   liniaCodi: string,
   paradaCodi: string,
+  all = false,
 ): Promise<{
   arribades: { liniaCodi: string; destinacio: string; minutsRestants: number | null; text: string }[];
   raw: IBusResponse;
@@ -301,13 +302,15 @@ export async function fetchIBus(
   const stopWideUrl = `${TMB_BASE}/ibus/stops/${encodeURIComponent(paradaCodi)}`;
 
   let data: IBusResponse = {};
-  try {
-    data = await fetchJson<IBusResponse>(lineScopedUrl);
-  } catch {
-    // Line-scoped endpoint may not exist for this combo; fall through to the wide one.
+  if (!all) {
+    try {
+      data = await fetchJson<IBusResponse>(lineScopedUrl);
+    } catch {
+      // Line-scoped endpoint may not exist for this combo; fall through to the wide one.
+    }
   }
 
-  if (rowsFromIBus(data).length === 0) {
+  if (all || rowsFromIBus(data).length === 0) {
     data = await fetchJson<IBusResponse>(stopWideUrl);
   }
 
@@ -332,12 +335,16 @@ export async function fetchIBus(
     };
   });
 
-  // Prefer arrivals that match the requested line; if none match (because of
-  // naming mismatches like "H10" vs "10"), return everything sorted by minutes.
-  const matching = normalised.filter(
-    (a) => !liniaCodi || a.liniaCodi === liniaCodi,
-  );
-  const arribades = matching.length > 0 ? matching : normalised;
+  const arribades = all
+    ? normalised
+    : (() => {
+        // Prefer arrivals that match the requested line; if none match (because of
+        // naming mismatches like "H10" vs "10"), return everything sorted by minutes.
+        const matching = normalised.filter(
+          (a) => !liniaCodi || a.liniaCodi === liniaCodi,
+        );
+        return matching.length > 0 ? matching : normalised;
+      })();
   arribades.sort((a, b) => {
     const am = a.minutsRestants ?? Number.POSITIVE_INFINITY;
     const bm = b.minutsRestants ?? Number.POSITIVE_INFINITY;
@@ -385,6 +392,7 @@ interface IMetroResponse {
 export async function fetchIMetro(
   liniaCodi: string,
   paradaCodi: string,
+  all = false,
 ): Promise<{
   arribades: { liniaCodi: string; destinacio: string; minutsRestants: number | null; text: string }[];
   raw: IMetroResponse;
@@ -401,10 +409,10 @@ export async function fetchIMetro(
   }[] = [];
 
   for (const linia of data.linies ?? []) {
-    if (liniaCodi && linia.nom_linia && linia.nom_linia !== liniaCodi) continue;
+    if (!all && liniaCodi && linia.nom_linia && linia.nom_linia !== liniaCodi) continue;
     for (const estacio of linia.estacions ?? []) {
       for (const traj of estacio.linies_trajectes ?? []) {
-        if (liniaCodi && traj.nom_linia && traj.nom_linia !== liniaCodi) continue;
+        if (!all && liniaCodi && traj.nom_linia && traj.nom_linia !== liniaCodi) continue;
         for (const tren of traj.propers_trens ?? []) {
           const arrival =
             typeof tren.temps_arribada === 'number' ? tren.temps_arribada : null;

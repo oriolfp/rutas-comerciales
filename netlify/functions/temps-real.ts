@@ -13,6 +13,7 @@ export default async (req: Request): Promise<Response> => {
   try {
     const url = new URL(req.url);
     const debug = url.searchParams.get('debug') === '1';
+    const all = url.searchParams.get('all') === '1';
     // Path: /api/temps-real/{tipus}/{liniaCodi}/{paradaCodi}
     const path = url.searchParams.get('path');
     const segments = (path ?? url.pathname.replace(/^.*temps-real\/?/, ''))
@@ -68,8 +69,8 @@ export default async (req: Request): Promise<Response> => {
     try {
       const { arribades } =
         tipus === 'bus'
-          ? await fetchIBus(liniaCodi, paradaCodi)
-          : await fetchIMetro(liniaCodi, paradaCodi);
+          ? await fetchIBus(liniaCodi, paradaCodi, all)
+          : await fetchIMetro(liniaCodi, paradaCodi, all);
       const resposta: TempsRealResposta = {
         parada: paradaCodi,
         arribades,

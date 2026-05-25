@@ -8,13 +8,14 @@ interface UseTempsRealResult {
   error: string | null;
 }
 
-const REFRESH_MS = 30_000;
+const REFRESH_MS = 60_000;
 
 export function useTempsReal(
   tipus: TransportType | null,
   liniaCodi: string | null,
   paradaCodi: string | null,
   enabled: boolean,
+  all = false,
 ): UseTempsRealResult {
   const [data, setData] = useState<TempsRealResposta | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,7 +31,7 @@ export function useTempsReal(
     let cancel = false;
     const fetchOnce = () => {
       setLoading(true);
-      getTempsReal(tipus, liniaCodi, paradaCodi)
+      getTempsReal(tipus, liniaCodi, paradaCodi, all)
         .then((res) => {
           if (cancel) return;
           setData(res);
@@ -50,7 +51,7 @@ export function useTempsReal(
       cancel = true;
       window.clearInterval(id);
     };
-  }, [tipus, liniaCodi, paradaCodi, enabled]);
+  }, [tipus, liniaCodi, paradaCodi, enabled, all]);
 
   return { data, loading, error };
 }

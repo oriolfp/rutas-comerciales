@@ -1,6 +1,6 @@
 import { useTempsReal } from '../hooks/useTempsReal';
 import { formatDistance } from '../utils/distance';
-import type { ParadaAprop, TransportType } from '../types/tmb';
+import type { LiniaResum, ParadaAprop, TempsRealArribada, TransportType } from '../types/tmb';
 
 const TYPE_LABEL: Record<TransportType, string> = {
   metro: 'Metro',
@@ -45,13 +45,13 @@ function StopItem({
 }) {
   const isTop = rank <= topN;
   const primary = parada.liniesQueParen[0];
-  const { data } = useTempsReal(
-    isTop && primary ? parada.tipus : null,
+  const { data, loading } = useTempsReal(
+    primary ? parada.tipus : null,
     primary?.codi ?? null,
     parada.codi,
-    isTop,
+    !!primary,
+    true,
   );
-  const nextArrival = data?.arribades[0];
 
   return (
     <div className={`stop-item${isTop ? ' highlight' : ''}`}>
@@ -63,27 +63,52 @@ function StopItem({
           <span>·</span>
           <span>{TYPE_LABEL[parada.tipus]}</span>
         </div>
-        <div className="stop-lines">
-          {parada.liniesQueParen.slice(0, 5).map((l) => (
-            <span key={l.id} className="stop-line-mini" style={{ background: l.color }}>
-              {l.codi}
-            </span>
+        <div className="line-arrivals">
+          {parada.liniesQueParen.map((l) => (
+            <LineArrivalRow
+              key={l.id}
+              linia={l}
+              arribades={data?.arribades ?? null}
+              loading={loading && !data}
+            />
           ))}
         </div>
       </div>
-      {isTop && nextArrival && (
-        <div className="arrival">
-          <span className="arrival-time">{nextArrival.text}</span>
-          <span className="arrival-line">
-            {nextArrival.liniaCodi}
-            {nextArrival.destinacio ? ` · ${truncate(nextArrival.destinacio, 14)}` : ''}
-          </span>
-        </div>
-      )}
     </div>
   );
 }
 
-function truncate(s: string, n: number) {
-  return s.length > n ? `${s.slice(0, n - 1)}…` : s;
+function LineArrivalRow({
+  linia,
+  arribades,
+  loading,
+}: {
+  linia: LiniaResum;
+  arribades: TempsRealArribada[] | null;
+  loading: boolean;
+}) {
+  const next = pickNextForLine(arribades, linia.codi);
+  return (
+    <div className="line-arrival">
+      <span className="line-arrival-badge" style={{ background: linia.color }}>
+        {linia.codi}
+      </span>
+      <span className="line-arrival-dest" title={next?.destinacio ?? ''}>
+        {next?.destinacio || (loading ? '…' : '—')}
+      </span>
+      <span className="line-arrival-time">
+        {next ? next.text : loading ? '…' : '—'}
+      </span>
+    </div>
+  );
+}
+
+function pickNextForLine(
+  arribades: TempsRealArribada[] | null,
+  liniaCodi: string,
+): TempsRealArribada | null {
+  if (!arribades) return null;
+  const matches = arribades.filter((a) => a.liniaCodi === liniaCodi);
+  if (matches.length > 0) return matches[0];
+  return null;
 }
