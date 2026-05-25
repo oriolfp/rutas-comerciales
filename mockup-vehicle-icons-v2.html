@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dibuixos minimalistes de bus i metro</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f2efe9;
+    padding: 24px;
+    color: #222;
+  }
+  h1 { font-size: 18px; margin-bottom: 4px; }
+  .lead { color: #666; font-size: 13px; margin-bottom: 20px; }
+
+  .option {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 18px 20px;
+    margin-bottom: 18px;
+  }
+  .option-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .option-head h2 { font-size: 14px; font-weight: 800; color: #222; }
+  .option-head .tag {
+    font-size: 10px;
+    font-weight: 700;
+    color: #c8001e;
+    background: #fff3f5;
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .option p { color: #666; font-size: 12px; margin-bottom: 14px; }
+
+  .preview-row {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding: 22px 18px;
+    background:
+      repeating-linear-gradient(0deg, #fafaf3, #fafaf3 39px, #efe9d8 40px),
+      repeating-linear-gradient(90deg, #fafaf3, #fafaf3 39px, #efe9d8 40px);
+    border-radius: 8px;
+    min-height: 96px;
+  }
+  .preview-item { text-align: center; }
+  .preview-item .caption {
+    margin-top: 8px;
+    font-size: 10px;
+    color: #888;
+    font-weight: 600;
+  }
+
+  .icon-wrap {
+    display: inline-flex;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+  }
+  .flip { transform: scaleX(-1); }
+
+  .size-label { font-size: 9px; color: #aaa; margin-top: 2px; }
+
+  .footer-note {
+    margin-top: 24px;
+    padding: 14px 18px;
+    background: #fff8e1;
+    border-left: 3px solid #f4a300;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<h1>Dibuixos minimalistes de bus i metro</h1>
+<p class="lead">Tres estils per als marcadors al mapa, amb el codi de línia incrustat de manera discreta. Fons reticulat = simula el mapa CartoDB Voyager. Tots inclouen variants <strong>direccionals</strong> (esquerra / dreta) i un parell de tamanys (24 i 32 px).</p>
+
+<!-- DESIGN 1: Side silhouette outlined -->
+<div class="option">
+  <div class="option-head">
+    <h2>Estil 1 · Silueta de costat, "contorn fi"</h2>
+    <span class="tag">Recomanat</span>
+  </div>
+  <p>Línia fina del color de la línia, fons blanc. Codi al cos amb font compacta. Elegant i nítid a totes les mides. Lleugerament inspirat en pictogrames de senyalització de transport.</p>
+  <div class="preview-row">
+    <!-- BUS 32px right -->
+    <div class="preview-item">
+      <span class="icon-wrap">
+        <svg width="44" height="28" viewBox="0 0 44 28">
+          <!-- body -->
+          <rect x="2" y="3" width="38" height="18" rx="4" fill="white" stroke="#C8001E" stroke-width="2"/>
+          <!-- nose / windshield -->
+          <path d="M40 5 Q42 12 40 19" fill="white" stroke="#C8001E" stroke-width="2"/>
+          <!-- windows -->
+          <line x1="14" y1="3" x2="14" y2="11" stroke="#C8001E" stroke-width="1.5"/>
+          <line x1="26" y1="3" x2="26" y2="11" stroke="#C8001E" stroke-width="1.5"/>
+          <rect x="4" y="5" width="34" height="6" rx="1.5" fill="none" stroke="#C8001E" stroke-width="1"/>
+          <!-- wheels -->
+          <circle cx="11" cy="23" r="3" fill="#C8001E"/>
+          <circle cx="11" cy="23" r="1.2" fill="white"/>
+          <circle cx="33" cy="23" r="3" fill="#C8001E"/>
+          <circle cx="33" cy="23" r="1.2" fill="white"/>
+          <!-- code -->
+          <text x="20" y="18" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="8" font-weight="800" fill="#C8001E">H10</text>
+        </svg>
+      </span>
+      <div class="caption">Bus H10 →</div>
+      <div class="size-label">32 px</div>
+    </div>
+
+    <!-- BUS 32px left -->
+    <div class="preview-item">
+      <span class="icon-wrap flip">
+        <svg width="44" height="28" viewBox="0 0 44 28">
+          <rect x="2" y="3" width="38" height="18" rx="4" fill="white" stroke="#E84E0F" stroke-width="2"/>
+          <path d="M40 5 Q42 12 40 19" fill="white" stroke="#E84E0F" stroke-width="2"/>
+          <line x1="14" y1="3" x2="14" y2="11" stroke="#E84E0F" stroke-width="1.5"/>
+          <line x1="26" y1="3" x2="26" y2="11" stroke="#E84E0F" stroke-width="1.5"/>
+          <rect x="4" y="5" width="34" height="6" rx="1.5" fill="none" stroke="#E84E0F" stroke-width="1"/>
+          <circle cx="11" cy="23" r="3" fill="#E84E0F"/>
+          <circle cx="11" cy="23" r="1.2" fill="white"/>
+          <circle cx="33" cy="23" r="3" fill="#E84E0F"/>
+          <circle cx="33" cy="23" r="1.2" fill="white"/>
+          <text x="20" y="18" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="8" font-weight="800" fill="#E84E0F" transform="scale(-1 1) translate(-40 0)">22</text>
+        </svg>
+      </span>
+      <div class="caption">Bus 22 ←</div>
+      <div class="size-label">32 px</div>
+    </div>
+
+    <!-- METRO 32px right -->
+    <div class="preview-item">
+      <span class="icon-wrap">
+        <svg width="48" height="22" viewBox="0 0 48 22">
+          <!-- streamlined body -->
+          <path d="M3 4 Q3 2 5 2 L40 2 Q46 2 46 11 Q46 20 40 20 L5 20 Q3 20 3 18 Z" fill="white" stroke="#0066CC" stroke-width="2"/>
+          <!-- nose detail -->
+          <path d="M42 5 Q45 11 42 17" fill="none" stroke="#0066CC" stroke-width="1.5"/>
+          <!-- windows -->
+          <rect x="6" y="5" width="6" height="5" rx="1" fill="none" stroke="#0066CC" stroke-width="1"/>
+          <rect x="14" y="5" width="6" height="5" rx="1" fill="none" stroke="#0066CC" stroke-width="1"/>
+          <rect x="22" y="5" width="6" height="5" rx="1" fill="none" stroke="#0066CC" stroke-width="1"/>
+          <!-- door line -->
+          <line x1="32" y1="2" x2="32" y2="20" stroke="#0066CC" stroke-width="1"/>
+          <!-- code -->
+          <text x="18" y="18" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="7" font-weight="800" fill="#0066CC">L4</text>
+        </svg>
+      </span>
+      <div class="caption">Metro L4 →</div>
+      <div class="size-label">32 px</div>
+    </div>
+
+    <!-- METRO 32px left -->
+    <div class="preview-item">
+      <span class="icon-wrap flip">
+        <svg width="48" height="22" viewBox="0 0 48 22">
+          <path d="M3 4 Q3 2 5 2 L40 2 Q46 2 46 11 Q46 20 40 20 L5 20 Q3 20 3 18 Z" fill="white" stroke="#C8001E" stroke-width="2"/>
+          <path d="M42 5 Q45 11 42 17" fill="none" stroke="#C8001E" stroke-width="1.5"/>
+          <rect x="6" y="5" width="6" height="5" rx="1" fill="none" stroke="#C8001E" stroke-width="1"/>
+          <rect x="14" y="5" width="6" height="5" rx="1" fill="none" stroke="#C8001E" stroke-width="1"/>
+          <rect x="22" y="5" width="6" height="5" rx="1" fill="none" stroke="#C8001E" stroke-width="1"/>
+          <line x1="32" y1="2" x2="32" y2="20" stroke="#C8001E" stroke-width="1"/>
+          <text x="18" y="18" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="7" font-weight="800" fill="#C8001E" transform="scale(-1 1) translate(-40 0)">L1</text>
+        </svg>
+      </span>
+      <div class="caption">Metro L1 ←</div>
+      <div class="size-label">32 px</div>
+    </div>
+
+    <!-- BUS 24px -->
+    <div class="preview-item">
+      <span class="icon-wrap">
+        <svg width="32" height="20" viewBox="0 0 44 28">
+          <rect x="2" y="3" width="38" height="18" rx="4" fill="white" stroke="#009B77" stroke-width="2"/>
+          <path d="M40 5 Q42 12 40 19" fill="white" stroke="#009B77" stroke-width="2"/>
+          <line x1="14" y1="3" x2="14" y2="11" stroke="#009B77" stroke-width="1.5"/>
+          <line x1="26" y1="3" x2="26" y2="11" stroke="#009B77" stroke-width="1.5"/>
+          <rect x="4" y="5" width="34" height="6" rx="1.5" fill="none" stroke="#009B77" stroke-width="1"/>
+          <circle cx="11" cy="23" r="3" fill="#009B77"/>
+          <circle cx="33" cy="23" r="3" fill="#009B77"/>
+          <text x="20" y="18" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="8" font-weight="800" fill="#009B77">V13</text>
+        </svg>
+      </span>
+      <div class="caption">Bus V13 →</div>
+      <div class="size-label">24 px (densitat alta)</div>
+    </div>
+  </div>
+</div>
+
+<!-- DESIGN 2: Solid fill silhouette -->
+<div class="option">
+  <div class="option-head">
+    <h2>Estil 2 · Silueta sòlida, "ple del color"</h2>
+  </div>
+  <p>El bus o metro està totalment pintat del color de la línia, codi en blanc. Té més presència visual; ideal si tens molts vehicles al mapa i vols que destaquin sobre les parades.</p>
+  <div class="preview-row">
+    <div class="preview-item">
+      <span class="icon-wrap">
+        <svg width="44" height="28" viewBox="0 0 44 28">
+          <rect x="2" y="3" width="38" height="18" rx="4" fill="#C8001E"/>
+          <path d="M40 5 Q42 12 40 19" fill="#C8001E"/>
+          <rect x="4" y="5" width="34" height="6" rx="1.5" fill="rgba(255,255,255,0.85)"/>
+          <line x1="14" y1="5" x2="14" y2="11" stroke="#C8001E" stroke-width="1.2"/>
+          <line x1="26" y1="5" x2="26" y2="11" stroke="#C8001E" stroke-width="1.2"/>
+          <circle cx="11" cy="23" r="3" fill="#222"/>
+          <circle cx="11" cy="23" r="1.1" fill="white"/>
+          <circle cx="33" cy="23" r="3" fill="#222"/>
+          <circle cx="33" cy="23" r="1.1" fill="white"/>
+          <text x="20" y="18" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="8" font-weight="800" fill="white">H10</text>
+        </svg>
+      </span>
+      <div class="caption">Bus H10 →</div>
+    </div>
+    <div class="preview-item">
+      <span class="icon-wrap flip">
+        <svg width="44" height="28" viewBox="0 0 44 28">
+          <rect x="2" y="3" width="38" height="18" rx="4" fill="#E84E0F"/>
+          <path d="M40 5 Q42 12 40 19" fill="#E84E0F"/>
+          <rect x="4" y="5" width="34" height="6" rx="1.5" fill="rgba(255,255,255,0.85)"/>
+          <circle cx="11" cy="23" r="3" fill="#222"/>
+          <circle cx="33" cy="23" r="3" fill="#222"/>
+          <text x="20" y="18" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="8" font-weight="800" fill="white" transform="scale(-1 1) translate(-40 0)">22</text>
+        </svg>
+      </span>
+      <div class="caption">Bus 22 ←</div>
+    </div>
+    <div class="preview-item">
+      <span class="icon-wrap">
+        <svg width="48" height="22" viewBox="0 0 48 22">
+          <path d="M3 4 Q3 2 5 2 L40 2 Q46 2 46 11 Q46 20 40 20 L5 20 Q3 20 3 18 Z" fill="#0066CC"/>
+          <rect x="6" y="5" width="6" height="5" rx="1" fill="rgba(255,255,255,0.85)"/>
+          <rect x="14" y="5" width="6" height="5" rx="1" fill="rgba(255,255,255,0.85)"/>
+          <rect x="22" y="5" width="6" height="5" rx="1" fill="rgba(255,255,255,0.85)"/>
+          <text x="18" y="18" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="7" font-weight="800" fill="white">L4</text>
+        </svg>
+      </span>
+      <div class="caption">Metro L4 →</div>
+    </div>
+    <div class="preview-item">
+      <span class="icon-wrap">
+        <svg width="48" height="22" viewBox="0 0 48 22">
+          <path d="M3 4 Q3 2 5 2 L40 2 Q46 2 46 11 Q46 20 40 20 L5 20 Q3 20 3 18 Z" fill="#9B2990"/>
+          <rect x="6" y="5" width="6" height="5" rx="1" fill="rgba(255,255,255,0.85)"/>
+          <rect x="14" y="5" width="6" height="5" rx="1" fill="rgba(255,255,255,0.85)"/>
+          <rect x="22" y="5" width="6" height="5" rx="1" fill="rgba(255,255,255,0.85)"/>
+          <text x="18" y="18" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="7" font-weight="800" fill="white">L2</text>
+        </svg>
+      </span>
+      <div class="caption">Metro L2 →</div>
+    </div>
+    <div class="preview-item">
+      <span class="icon-wrap">
+        <svg width="32" height="20" viewBox="0 0 44 28">
+          <rect x="2" y="3" width="38" height="18" rx="4" fill="#009B77"/>
+          <path d="M40 5 Q42 12 40 19" fill="#009B77"/>
+          <rect x="4" y="5" width="34" height="6" rx="1.5" fill="rgba(255,255,255,0.85)"/>
+          <circle cx="11" cy="23" r="3" fill="#222"/>
+          <circle cx="33" cy="23" r="3" fill="#222"/>
+          <text x="20" y="18" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="8" font-weight="800" fill="white">V13</text>
+        </svg>
+      </span>
+      <div class="caption">Bus V13 →</div>
+      <div class="size-label">24 px</div>
+    </div>
+  </div>
+</div>
+
+<!-- DESIGN 3: Tiny pictogram -->
+<div class="option">
+  <div class="option-head">
+    <h2>Estil 3 · Pictograma compacte sense codi</h2>
+  </div>
+  <p>Sense text dins. Només el dibuix del bus/metro, més petit i discret. La identificació de línia es deixa al color. Bo si la densitat de vehicles és molt alta i el text faria soroll. Es perd una mica de claredat sobre quina és cada línia si tens dues línies de colors similars.</p>
+  <div class="preview-row">
+    <div class="preview-item">
+      <span class="icon-wrap">
+        <svg width="32" height="20" viewBox="0 0 32 20">
+          <rect x="2" y="3" width="26" height="12" rx="3" fill="#C8001E" stroke="white" stroke-width="1.5"/>
+          <rect x="4" y="5" width="22" height="4" rx="1" fill="rgba(255,255,255,0.9)"/>
+          <circle cx="8" cy="17" r="2" fill="#222" stroke="white" stroke-width="0.8"/>
+          <circle cx="22" cy="17" r="2" fill="#222" stroke="white" stroke-width="0.8"/>
+          <path d="M28 5 Q30 10 28 13" fill="#C8001E" stroke="white" stroke-width="1"/>
+        </svg>
+      </span>
+      <div class="caption">Bus L1-color →</div>
+    </div>
+    <div class="preview-item">
+      <span class="icon-wrap">
+        <svg width="32" height="14" viewBox="0 0 32 14">
+          <path d="M2 3 Q2 1 4 1 L25 1 Q30 1 30 7 Q30 13 25 13 L4 13 Q2 13 2 11 Z" fill="#0066CC" stroke="white" stroke-width="1.5"/>
+          <rect x="4" y="4" width="4" height="3" rx="0.5" fill="rgba(255,255,255,0.9)"/>
+          <rect x="10" y="4" width="4" height="3" rx="0.5" fill="rgba(255,255,255,0.9)"/>
+          <rect x="16" y="4" width="4" height="3" rx="0.5" fill="rgba(255,255,255,0.9)"/>
+        </svg>
+      </span>
+      <div class="caption">Metro L4 →</div>
+    </div>
+    <div class="preview-item">
+      <span class="icon-wrap flip">
+        <svg width="32" height="20" viewBox="0 0 32 20">
+          <rect x="2" y="3" width="26" height="12" rx="3" fill="#E84E0F" stroke="white" stroke-width="1.5"/>
+          <rect x="4" y="5" width="22" height="4" rx="1" fill="rgba(255,255,255,0.9)"/>
+          <circle cx="8" cy="17" r="2" fill="#222"/>
+          <circle cx="22" cy="17" r="2" fill="#222"/>
+          <path d="M28 5 Q30 10 28 13" fill="#E84E0F"/>
+        </svg>
+      </span>
+      <div class="caption">Bus ←</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-note">
+  <strong>Recomanació:</strong> Estil 1 ("contorn fi"). Es llegeix bé fins i tot a 24 px, no satura el mapa, manté el codi de línia visible per a casos d'ambigüitat (línies de colors similars com L1 i L9 vermelles) i té un to elegant tipus pictograma de senyalització. Si vols més presència, Estil 2.
+</div>
+
+</body>
+</html>
