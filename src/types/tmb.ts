@@ -41,3 +41,33 @@ export interface TempsRealResposta {
   disponible: boolean;
   missatge?: string;
 }
+
+export interface Coordinate {
+  lat: number;
+  lng: number;
+}
+
+export interface LiniaResum {
+  id: string;
+  codi: string;
+  tipus: TransportType;
+  color: string;
+}
+
+export interface ParadaAmbLinies {
+  id: string;
+  codi: string;
+  nom: string;
+  lat: number;
+  lng: number;
+  tipus: TransportType;
+  liniesQueParen: LiniaResum[];
+}
+
+export interface ParadaAprop extends ParadaAmbLinies {
+  distanciaM: number;
+}
+
+export interface LiniaAmbComptador extends LiniaResum {
+  numParades: number;
+}

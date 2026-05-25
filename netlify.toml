@@ -12,6 +12,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/parades-all"
+  to = "/.netlify/functions/parades-all"
+  status = 200
+
+[[redirects]]
   from = "/api/parades/*"
   to = "/.netlify/functions/parades?liniaId=:splat"
   status = 200

@@ -1,4 +1,10 @@
-import type { Linia, Parada, TempsRealResposta, TransportType } from '../types/tmb';
+import type {
+  Linia,
+  Parada,
+  ParadaAmbLinies,
+  TempsRealResposta,
+  TransportType,
+} from '../types/tmb';
 
 const API_BASE = '/api';
 
@@ -19,6 +25,10 @@ export function getParades(liniaId: string): Promise<Parada[]> {
   return jsonFetch<Parada[]>(
     `${API_BASE}/parades/${encodeURIComponent(liniaId)}`,
   );
+}
+
+export function getParadesAll(): Promise<ParadaAmbLinies[]> {
+  return jsonFetch<ParadaAmbLinies[]>(`${API_BASE}/parades-all`);
 }
 
 export function getTempsReal(
