@@ -234,14 +234,17 @@ export async function fetchParades(liniaId: string): Promise<Parada[]> {
 // --- TEMPS REAL (iBus) -----------------------------------------------
 
 interface IBusRow {
-  line: string;
+  line?: string;
+  'line-name'?: string;
   destination?: string;
   'text-ca'?: string;
   'text-es'?: string;
   'text-en'?: string;
   'in-transit'?: string;
   t_in_min?: number;
+  't-in-min'?: number;
   routeId?: string;
+  route?: string;
   text?: string;
 }
 
@@ -256,23 +259,57 @@ export async function fetchIBus(
   arribades: { liniaCodi: string; destinacio: string; minutsRestants: number | null; text: string }[];
   raw: IBusResponse;
 }> {
-  const url = `${TMB_BASE}/ibus/stops/${encodeURIComponent(paradaCodi)}`;
-  const data = await fetchJson<IBusResponse>(url);
+  // TMB exposes two iBus endpoints. The line-scoped one is more reliable,
+  // but it sometimes returns an empty payload, so we fall back to the
+  // stop-wide endpoint and tag every arrival as relevant.
+  const lineScopedUrl = `${TMB_BASE}/ibus/lines/${encodeURIComponent(liniaCodi)}/stops/${encodeURIComponent(paradaCodi)}`;
+  const stopWideUrl = `${TMB_BASE}/ibus/stops/${encodeURIComponent(paradaCodi)}`;
+
+  let data: IBusResponse = {};
+  try {
+    data = await fetchJson<IBusResponse>(lineScopedUrl);
+  } catch {
+    // Line-scoped endpoint may not exist for this combo; fall through to the wide one.
+  }
+
+  if (!data.features || data.features.length === 0) {
+    data = await fetchJson<IBusResponse>(stopWideUrl);
+  }
+
   const rows = data.features ?? [];
-  const arribades = rows
-    .map((row) => row.properties)
-    .filter((p) => !liniaCodi || s(p.line) === liniaCodi || s(p.routeId) === liniaCodi)
-    .map((p) => {
-      const text = s(p['text-ca'] ?? p.text ?? p['text-es'] ?? '');
-      const minutsRestants =
-        typeof p.t_in_min === 'number' && Number.isFinite(p.t_in_min) ? p.t_in_min : null;
-      return {
-        liniaCodi: s(p.line),
-        destinacio: s(p.destination ?? ''),
-        minutsRestants,
-        text: text || (minutsRestants !== null ? `${minutsRestants} min` : '—'),
-      };
-    });
+  const normalised = rows.map((row) => {
+    const p = row.properties;
+    const text = s(p['text-ca'] ?? p.text ?? p['text-es'] ?? '');
+    const minuts =
+      typeof p.t_in_min === 'number'
+        ? p.t_in_min
+        : typeof p['t-in-min'] === 'number'
+          ? p['t-in-min']
+          : null;
+    return {
+      liniaCodi: s(p.line ?? p['line-name'] ?? p.route ?? p.routeId),
+      destinacio: s(p.destination ?? ''),
+      minutsRestants: minuts !== null && Number.isFinite(minuts) ? minuts : null,
+      text:
+        text ||
+        (minuts !== null && Number.isFinite(minuts)
+          ? `${minuts} min`
+          : '—'),
+    };
+  });
+
+  // Prefer arrivals that match the requested line; if none match (because of
+  // naming mismatches like "H10" vs "10"), return everything sorted by minutes.
+  const matching = normalised.filter(
+    (a) => !liniaCodi || a.liniaCodi === liniaCodi,
+  );
+  const arribades = matching.length > 0 ? matching : normalised;
+  arribades.sort((a, b) => {
+    const am = a.minutsRestants ?? Number.POSITIVE_INFINITY;
+    const bm = b.minutsRestants ?? Number.POSITIVE_INFINITY;
+    return am - bm;
+  });
+
   return { arribades, raw: data };
 }
 

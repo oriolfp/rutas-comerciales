@@ -180,8 +180,42 @@ body {
   padding: 2px 0;
   font-size: 12px;
 }
-.popup-dest { color: #555; }
+.popup-dest { color: #555; display: inline-flex; align-items: center; gap: 6px; }
+.popup-otherline {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #eee;
+  font-size: 10px;
+  font-weight: 800;
+  color: #555;
+}
 .popup-time { color: #c8001e; font-weight: 700; }
+
+.stop-tooltip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  border: none;
+}
+.tooltip-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: 0.3px;
+}
+.tooltip-name { font-weight: 600; color: #222; }
 
 @media (max-width: 640px) {
   .app-main { flex-direction: column-reverse; }

@@ -19,7 +19,12 @@ export function StopPopup({ linia, parada, enabled }: Props) {
         </span>
       </div>
       {linia.tipus === 'bus' ? (
-        <TempsRealBlock loading={loading} error={error} data={data} />
+        <TempsRealBlock
+          loading={loading}
+          error={error}
+          data={data}
+          liniaCodi={linia.codi}
+        />
       ) : (
         <div className="popup-note">
           Temps real no disponible per a {labelTipus(linia.tipus)}.
@@ -48,25 +53,35 @@ function TempsRealBlock({
   loading,
   error,
   data,
+  liniaCodi,
 }: {
   loading: boolean;
   error: string | null;
   data: ReturnType<typeof useTempsReal>['data'];
+  liniaCodi: string;
 }) {
   if (loading && !data) return <div className="popup-loading">Consultant temps real…</div>;
   if (error) return <div className="popup-error">Temps real no disponible.</div>;
   if (!data) return null;
   if (!data.disponible || data.arribades.length === 0) {
-    return <div className="popup-note">{data.missatge ?? 'Sense informació de temps real.'}</div>;
+    return <div className="popup-note">Sense vehicles propers ara mateix.</div>;
   }
   return (
     <ul className="popup-arrivals">
-      {data.arribades.slice(0, 4).map((a, idx) => (
-        <li key={idx}>
-          <span className="popup-dest">{a.destinacio || '—'}</span>
-          <span className="popup-time">{a.text}</span>
-        </li>
-      ))}
+      {data.arribades.slice(0, 5).map((a, idx) => {
+        const isOtherLine = a.liniaCodi && a.liniaCodi !== liniaCodi;
+        return (
+          <li key={idx}>
+            <span className="popup-dest">
+              {isOtherLine && (
+                <span className="popup-otherline">{a.liniaCodi}</span>
+              )}
+              {a.destinacio || '—'}
+            </span>
+            <span className="popup-time">{a.text}</span>
+          </li>
+        );
+      })}
     </ul>
   );
 }

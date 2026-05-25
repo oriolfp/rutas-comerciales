@@ -1,6 +1,5 @@
-import L from 'leaflet';
-import { useEffect, useState } from 'react';
-import { CircleMarker, Popup } from 'react-leaflet';
+import { useState } from 'react';
+import { CircleMarker, Popup, Tooltip } from 'react-leaflet';
 import { StopPopup } from './StopPopup';
 import type { Linia, Parada } from '../types/tmb';
 
@@ -28,25 +27,15 @@ export function StopMarker({ linia, parada, terminal = false }: Props) {
         popupclose: () => setOpen(false),
       }}
     >
+      <Tooltip direction="top" offset={[0, -4]} opacity={1} className="stop-tooltip">
+        <span className="tooltip-badge" style={{ background: linia.color }}>
+          {linia.codi}
+        </span>
+        <span className="tooltip-name">{parada.nom}</span>
+      </Tooltip>
       <Popup>
-        <PopupAutoSize />
         <StopPopup linia={linia} parada={parada} enabled={open} />
       </Popup>
     </CircleMarker>
   );
 }
-
-// Forces Leaflet popup to resize after our content renders the first time.
-function PopupAutoSize() {
-  useEffect(() => {
-    const t = window.setTimeout(() => {
-      // Touch leaflet's popup wrapper by dispatching a resize.
-      window.dispatchEvent(new Event('resize'));
-    }, 0);
-    return () => window.clearTimeout(t);
-  }, []);
-  return null;
-}
-
-// Re-export Leaflet for convenience (avoids tree-shaking surprises in tests).
-export const _L = L;
