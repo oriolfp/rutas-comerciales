@@ -1,4 +1,4 @@
-export type TransportType = 'metro' | 'bus' | 'tramvia' | 'fgc' | 'rodalies';
+export type TransportType = 'metro' | 'bus';
 
 export interface Linia {
   id: string;

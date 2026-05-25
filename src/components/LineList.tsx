@@ -3,9 +3,6 @@ import type { Linia } from '../types/tmb';
 const TYPE_LABEL: Record<Linia['tipus'], string> = {
   metro: 'Metro',
   bus: 'Bus',
-  tramvia: 'Tramvia',
-  fgc: 'FGC',
-  rodalies: 'Rodalies',
 };
 
 interface Props {
